@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML to Excel Converter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+        integrity="sha512-Fo3rlrQkzUqWZ0fnn4o8oNBW3BOxKh4Ib6lWQ9VFEF3il2mlTfW0pc5Wf3A9BoZBBYXrKBlHCh4DbbZyXUNg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('assets/deng_gif.webp');
+            /* Use the image you uploaded */
+            background-size: cover;
+            /* Make the image cover the entire background */
+            background-position: center;
+            /* Center the image */
+            background-repeat: no-repeat;
+            /* No repeat */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background-color: #ff78c5a4;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        input[type="file"] {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            width: 100%;
+            max-width: 400px;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .note {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .file-list {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .file-item {
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f5;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .file-item i {
+            font-size: 24px;
+            color: #007bff;
+            margin-right: 10px;
+        }
+
+        .file-item span {
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h2>Upload XML Files and Convert to Excel</h2>
+        <input type="file" id="fileInput" accept=".xml" multiple>
+        <br><br>
+        <button id="convertButton">Convert to Excel</button>
+        <p class="note">Please select XML files and click the button to convert them to Excel.</p>
+        <div class="file-list" id="fileList"></div>
+    </div>
+
+    <script>
+        // Function to parse XML
+        function parseXml(xmlString) {
+            const parser = new DOMParser();
+            return parser.parseFromString(xmlString, "text/xml");
+        }
+
+        // Function to extract data from XML
+        function extractDataFromXml(xml) {
+            const billingRequests = xml.getElementsByTagName("ns0:BillingRequest");
+            const extractedData = [];
+
+            Array.from(billingRequests).forEach(request => {
+                const registerID = request.getElementsByTagName('ns0:RegisterID')[0].textContent;
+                const entityID = request.getElementsByTagName('ns0:EntityID')[0].textContent;
+
+                if (registerID === '010') { // Condition to match RegisterID as 010
+                    extractedData.push({
+                        MeterID: entityID,
+                        RegisterID: 'TOU' // RegisterID set to "TOU"
+                    });
+                }
+            });
+
+            return extractedData;
+        }
+
+        // Function to generate Excel file and download it
+        function generateExcel(data, summaryData, filename) {
+            const workbook = XLSX.utils.book_new();
+
+            // Add data sheet
+            const worksheet = XLSX.utils.json_to_sheet(data);
+            XLSX.utils.book_append_sheet(workbook, worksheet, "TOU");
+
+            // Add summary sheet
+            const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+            XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+
+            // Write file and trigger download
+            XLSX.writeFile(workbook, filename);
+        }
+
+        // Function to extract the date from the filename
+        function extractDateFromFilename(filename) {
+            const match = filename.match(/\d{8}/); // Matches the first 8-digit number
+            return match ? match[0] : 'result'; // Default to 'result' if no date is found
+        }
+
+        // Display selected files
+        function displaySelectedFiles(files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = ''; // Clear previous file list
+
+            Array.from(files).forEach(file => {
+                const fileItem = document.createElement('div');
+                fileItem.classList.add('file-item');
+
+                const fileIcon = document.createElement('i');
+                fileIcon.classList.add('fas', 'fa-file-alt');
+
+                const fileName = document.createElement('span');
+                fileName.textContent = file.name;
+
+                fileItem.appendChild(fileIcon);
+                fileItem.appendChild(fileName);
+                fileList.appendChild(fileItem);
+            });
+        }
+
+        // Event listener for file input change
+        document.getElementById('fileInput').addEventListener('change', function () {
+            const files = this.files;
+            if (files.length > 0) {
+                displaySelectedFiles(files);
+            }
+        });
+
+        // Event listener for the "Convert to Excel" button
+        document.getElementById('convertButton').addEventListener('click', async () => {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                alert('Please select XML files.');
+                return;
+            }
+
+            let mergedData = [];
+            let summaryData = [];
+
+            // Use a Promise to wait until all files are read
+            const readFilesPromises = Array.from(files).map(file => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+
+                    reader.onload = (event) => {
+                        const xmlContent = event.target.result;
+                        const xmlDocument = parseXml(xmlContent);
+                        const extractedData = extractDataFromXml(xmlDocument);
+                        const billingRequestCount = xmlDocument.getElementsByTagName("ns0:BillingRequest").length;
+
+                        mergedData = mergedData.concat(extractedData);
+
+                        // Add file name and count to summary data
+                        summaryData.push({
+                            fileName: file.name,
+                            count_register: billingRequestCount
+                        });
+
+                        resolve();
+                    };
+
+                    reader.onerror = () => {
+                        alert(`Error reading file ${file.name}`);
+                        reject();
+                    };
+
+                    // Read the XML file as text
+                    reader.readAsText(file);
+                });
+            });
+
+            // Wait until all files are processed
+            await Promise.all(readFilesPromises);
+
+            if (mergedData.length > 0) {
+                const firstFile = files[0];
+                const date = extractDateFromFilename(firstFile.name);
+                generateExcel(mergedData, summaryData, `${date}.xlsx`);
+                alert(`Data successfully converted to ${date}.xlsx`);
+            } else {
+                alert('No data to write to Excel.');
+            }
+        });
+    </script>
+
+</body>
+
+</html>
