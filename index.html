@@ -114,10 +114,12 @@
         <h2>Upload XML Files and Convert to Excel</h2>
         <input type="file" id="fileInput" accept=".xml" multiple>
         <br><br>
-        <button id="convertButton">Convert to Excel</button>
+        <button id="convertButton">ENTER</button>
         <p class="note">Please select XML files and click the button to convert them to Excel.</p>
         <div class="file-list" id="fileList"></div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         // Function to parse XML
@@ -165,7 +167,7 @@
         // Function to extract the date from the filename
         function extractDateFromFilename(filename) {
             const match = filename.match(/\d{8}/); // Matches the first 8-digit number
-            return match ? match[0] : 'result'; // Default to 'result' if no date is found
+            return match ? match[0] : null;
         }
 
         // Display selected files
@@ -186,6 +188,97 @@
                 fileItem.appendChild(fileIcon);
                 fileItem.appendChild(fileName);
                 fileList.appendChild(fileItem);
+            });
+        }
+
+        // Function to copy MeterID values to clipboard
+        function copyMeterIDToClipboard() {
+            // Get all the MeterID values from the table
+            const meterIDCells = document.querySelectorAll('#touTable tbody tr td:first-child');
+            let meterIDValues = '';
+            meterIDCells.forEach(cell => {
+                meterIDValues += `${cell.textContent}\n`;
+            });
+
+            // Copy the MeterID values to the clipboard
+            navigator.clipboard.writeText(meterIDValues)
+                .then(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Copied',
+                        text: 'MeterID values copied to clipboard!',
+                        timer: 1500,
+                        showConfirmButton: false
+                    });
+                })
+                .catch(err => {
+                    console.error('Failed to copy text: ', err);
+                });
+        }
+
+        // Function to display data in SweetAlert with a scrollbar for TOU data
+        function displayDataInSweetAlert(data, summaryData, firstFileName) {
+            let touTable = `<div style="max-height: 300px; overflow-y: auto;">
+                                <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
+                                    <thead>
+                                        <tr>
+                                            <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
+                                            <th style="background-color: #007bff; color: white;">RegisterID</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+
+            data.forEach(item => {
+                touTable += `<tr>
+                                <td>${item.MeterID}</td>
+                                <td>${item.RegisterID}</td>
+                             </tr>`;
+            });
+
+            touTable += `</tbody></table></div>`;
+
+            let summaryTable = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="background-color: #007bff; color: white;">File Name</th>
+                                        <th style="background-color: #007bff; color: white;">Billing Request Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+            summaryData.forEach(item => {
+                summaryTable += `<tr>
+                                    <td>${item.fileName}</td>
+                                    <td>${item.count_register}</td>
+                                 </tr>`;
+            });
+
+            summaryTable += `</tbody></table>`;
+
+            // Display the modal with SweetAlert
+            Swal.fire({
+                title: 'Extracted Data',
+                html: `<h3>TOU Data</h3>${touTable}<br><h3>Summary</h3>${summaryTable}`,
+                width: '80%',
+                showCancelButton: true,
+                confirmButtonText: 'Export to Excel',
+                cancelButtonText: 'Close',
+                preConfirm: () => {
+                    return true;
+                },
+                didOpen: () => {
+                    // Add event listener to MeterID header to copy data to clipboard
+                    document.getElementById('meterIDHeader').addEventListener('click', copyMeterIDToClipboard);
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Extract date from the first file's name
+                    const date = extractDateFromFilename(firstFileName);
+                    const filename = date ? `${date}_export.xlsx` : 'export_result.xlsx';
+
+                    // Generate and download the Excel file
+                    generateExcel(data, summaryData, filename);
+                }
             });
         }
 
@@ -247,9 +340,9 @@
 
             if (mergedData.length > 0) {
                 const firstFile = files[0];
-                const date = extractDateFromFilename(firstFile.name);
-                generateExcel(mergedData, summaryData, `${date}.xlsx`);
-                alert(`Data successfully converted to ${date}.xlsx`);
+
+                // Display data in SweetAlert with the option to export
+                displayDataInSweetAlert(mergedData, summaryData, firstFile.name);
             } else {
                 alert('No data to write to Excel.');
             }
