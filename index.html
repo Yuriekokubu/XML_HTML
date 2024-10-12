@@ -4,11 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XML to Excel Converter</title>
+    <title>MooDeng XML</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
         integrity="sha512-Fo3rlrQkzUqWZ0fnn4o8oNBW3BOxKh4Ib6lWQ9VFEF3il2mlTfW0pc5Wf3A9BoZBBYXrKBlHCh4DbbZyXUNg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="icon" href="assets/hippo.ico" type="image/x-icon">
     <style>
         body {
             font-family: 'Arial', sans-serif;
@@ -207,14 +208,17 @@
                         icon: 'success',
                         title: 'Copied',
                         text: 'MeterID values copied to clipboard!',
-                        timer: 1500,
-                        showConfirmButton: false
+                        toast: true, // Display as toast (small popup)
+                        position: 'top-end', // Position it in the top-right corner
+                        showConfirmButton: false,
+                        timer: 1500 // Show for 1.5 seconds
                     });
                 })
                 .catch(err => {
                     console.error('Failed to copy text: ', err);
                 });
         }
+
 
         // Function to display data in SweetAlert with a scrollbar for TOU data
         function displayDataInSweetAlert(data, summaryData, firstFileName) {
