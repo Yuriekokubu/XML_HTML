@@ -115,7 +115,7 @@
         <h2>Upload XML Files and Convert to Excel</h2>
         <input type="file" id="fileInput" accept=".xml" multiple>
         <br><br>
-        <button id="convertButton">ENTER</button>
+        <button id="convertButton">Convert</button>
         <p class="note">Please select XML files and click the button to convert them to Excel.</p>
         <div class="file-list" id="fileList"></div>
     </div>
@@ -128,11 +128,11 @@
             const parser = new DOMParser();
             return parser.parseFromString(xmlString, "text/xml");
         }
-
         // Function to extract data from XML
         function extractDataFromXml(xml) {
             const billingRequests = xml.getElementsByTagName("ns0:BillingRequest");
             const extractedData = [];
+            let touCount = 0; // Variable to count TOU entries
 
             Array.from(billingRequests).forEach(request => {
                 const registerID = request.getElementsByTagName('ns0:RegisterID')[0].textContent;
@@ -143,11 +143,13 @@
                         MeterID: entityID,
                         RegisterID: 'TOU' // RegisterID set to "TOU"
                     });
+                    touCount++; // Increment TOU count
                 }
             });
 
-            return extractedData;
+            return { data: extractedData, touCount: touCount };
         }
+
 
         // Function to generate Excel file and download it
         function generateExcel(data, summaryData, filename) {
@@ -221,41 +223,59 @@
 
 
         // Function to display data in SweetAlert with a scrollbar for TOU data
-        function displayDataInSweetAlert(data, summaryData, firstFileName) {
+        function displayDataInSweetAlert(data, summaryData, totalTOUCount, firstFileName) {
+            // Sort the summary data by the 4-digit part in the file name
+            summaryData.sort((a, b) => {
+                const extractNumber = (fileName) => {
+                    const match = fileName.match(/_\d{4}_/); // Extract the 4-digit number surrounded by underscores
+                    return match ? parseInt(match[0].replace(/_/g, ''), 10) : 0;
+                };
+
+                return extractNumber(a.fileName) - extractNumber(b.fileName);
+            });
+
             let touTable = `<div style="max-height: 300px; overflow-y: auto;">
-                                <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
-                                    <thead>
-                                        <tr>
-                                            <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
-                                            <th style="background-color: #007bff; color: white;">RegisterID</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
+                        <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
+                            <thead>
+                                <tr>
+                                    <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
+                                    <th style="background-color: #007bff; color: white;">RegisterID</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
             data.forEach(item => {
                 touTable += `<tr>
-                                <td>${item.MeterID}</td>
-                                <td>${item.RegisterID}</td>
-                             </tr>`;
+                        <td>${item.MeterID}</td>
+                        <td>${item.RegisterID}</td>
+                     </tr>`;
             });
 
             touTable += `</tbody></table></div>`;
 
             let summaryTable = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
-                                <thead>
-                                    <tr>
-                                        <th style="background-color: #007bff; color: white;">File Name</th>
-                                        <th style="background-color: #007bff; color: white;">Billing Request Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #007bff; color: white;">File Name</th>
+                                    <th style="background-color: #007bff; color: white;">Billing Request Count</th>
+                                    <th style="background-color: #007bff; color: white;">TOU Count</th> <!-- Add TOU Count header -->
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
             summaryData.forEach(item => {
                 summaryTable += `<tr>
-                                    <td>${item.fileName}</td>
-                                    <td>${item.count_register}</td>
-                                 </tr>`;
+                            <td>${item.fileName}</td>
+                            <td>${item.count_register}</td>
+                            <td>${item.tou_count}</td> <!-- Add TOU count data -->
+                         </tr>`;
             });
+
+            // Add row for total TOU count at the end of the table
+            summaryTable += `<tr>
+                        <td colspan="2" style="text-align:right;"><strong>Total TOU Count</strong></td>
+                        <td><strong>${totalTOUCount}</strong></td>
+                     </tr>`;
 
             summaryTable += `</tbody></table>`;
 
@@ -286,6 +306,7 @@
             });
         }
 
+
         // Event listener for file input change
         document.getElementById('fileInput').addEventListener('change', function () {
             const files = this.files;
@@ -300,12 +321,25 @@
             const files = fileInput.files;
 
             if (files.length === 0) {
-                alert('Please select XML files.');
-                return;
+                // If no files are selected, show SweetAlert
+                Swal.fire({
+                    toast: true,
+                    title: 'หมูเด้งแจ้งเตือน',
+                    text: 'โปรดอัพโหลดไฟล์ก่อนคร้าบบบ',
+                    confirmButtonText: 'เข้าใจแล้ว',
+                    imageUrl: 'assets/hippo.png', // URL or path to the image
+                    imageWidth: 300, // Width of the image (you can adjust this)
+                    imageAlt: 'Custom image', // Alt text for accessibility
+                    allowOutsideClick: true
+
+                });
+
+                return; // Exit the function early since no files were selected
             }
 
             let mergedData = [];
             let summaryData = [];
+            let totalTOUCount = 0; // Variable to store total TOU count
 
             // Use a Promise to wait until all files are read
             const readFilesPromises = Array.from(files).map(file => {
@@ -315,22 +349,29 @@
                     reader.onload = (event) => {
                         const xmlContent = event.target.result;
                         const xmlDocument = parseXml(xmlContent);
-                        const extractedData = extractDataFromXml(xmlDocument);
+                        const { data: extractedData, touCount } = extractDataFromXml(xmlDocument); // Destructure data and TOU count
                         const billingRequestCount = xmlDocument.getElementsByTagName("ns0:BillingRequest").length;
 
                         mergedData = mergedData.concat(extractedData);
 
-                        // Add file name and count to summary data
+                        // Add file name, billing count, and TOU count to summary data
                         summaryData.push({
                             fileName: file.name,
-                            count_register: billingRequestCount
+                            count_register: billingRequestCount,
+                            tou_count: touCount // Add TOU count to summary
                         });
+
+                        totalTOUCount += touCount; // Add to the total TOU count
 
                         resolve();
                     };
 
                     reader.onerror = () => {
-                        alert(`Error reading file ${file.name}`);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error reading file',
+                            text: `Error reading file ${file.name}`
+                        });
                         reject();
                     };
 
@@ -346,11 +387,18 @@
                 const firstFile = files[0];
 
                 // Display data in SweetAlert with the option to export
-                displayDataInSweetAlert(mergedData, summaryData, firstFile.name);
+                displayDataInSweetAlert(mergedData, summaryData, totalTOUCount, firstFile.name);
             } else {
-                alert('No data to write to Excel.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'No data to write',
+                    text: 'No data to write to Excel. Please try again with valid XML files.'
+                });
             }
         });
+
+
+
     </script>
 
 </body>
