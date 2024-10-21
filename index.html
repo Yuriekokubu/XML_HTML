@@ -133,7 +133,7 @@
                 const registerID = request.getElementsByTagName('ns0:RegisterID')[0].textContent;
                 const entityID = request.getElementsByTagName('ns0:EntityID')[0].textContent;
 
-                if (registerID === '010') {
+                if (registerID === '010') {  // Condition to match '010'
                     extractedData.push({
                         MeterID: entityID,
                         RegisterID: 'TOU'
@@ -142,6 +142,10 @@
                 }
             });
 
+            if (extractedData.length === 0) {
+                extractedData.push({ MeterID: '', RegisterID: '' });
+
+            }
             return { data: extractedData, touCount: touCount };
         }
 
@@ -217,57 +221,66 @@
                 return extractNumber(a.fileName) - extractNumber(b.fileName);
             });
 
-            let touTable = `<div style="max-height: 300px; overflow-y: auto;">
-                            <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
-                                <thead>
-                                    <tr>
-                                        <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
-                                        <th style="background-color: #007bff; color: white;">RegisterID</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+            let touTable = '';
+            if (totalTOUCount > 0) {
+                // Only show TOU table if there is any TOU data
+                touTable = `<div style="max-height: 300px; overflow-y: auto;">
+                        <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:center;">
+                            <thead>
+                                <tr>
+                                    <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
+                                    <th style="background-color: #007bff; color: white;">RegisterID</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
-            data.forEach(item => {
-                touTable += `<tr>
-                            <td>${item.MeterID}</td>
-                            <td>${item.RegisterID}</td>
-                         </tr>`;
-            });
+                data.forEach(item => {
+                    touTable += `<tr>
+                        <td>${item.MeterID}</td>
+                        <td>${item.RegisterID}</td>
+                     </tr>`;
+                });
 
-            touTable += `</tbody></table></div>`;
+                touTable += `</tbody></table></div>`;
+            } else {
+                // Show "No TOU Found" message
+                touTable = `<div style="text-align: center; font-size: 16px; color: #d9534f;">
+                        No TOU Found
+                    </div>`;
+            }
 
-            let summaryTable = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;">
-                                <thead>
-                                    <tr>
-                                        <th style="background-color: #007bff; color: white;">File Name</th>
-                                        <th style="background-color: #007bff; color: white;">Billing Request Count</th>
-                                        <th style="background-color: #007bff; color: white;">TOU Count</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+            let summaryTable = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:center;">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #007bff; color: white;">File Name</th>
+                                    <th style="background-color: #007bff; color: white;">Billing Request Count</th>
+                                    <th style="background-color: #007bff; color: white;">TOU Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
 
             let totalBillingRequestCount = 0;
 
             summaryData.forEach(item => {
                 summaryTable += `<tr>
-                                <td>${item.fileName}</td>
-                                <td>${item.count_register}</td>
-                                <td>${item.tou_count}</td>
-                             </tr>`;
+                            <td>${item.fileName}</td>
+                            <td>${item.count_register}</td>
+                            <td>${item.tou_count}</td>
+                         </tr>`;
                 totalBillingRequestCount += item.count_register;
             });
 
             summaryTable += `<tr>
-                            <td style="text-align:right;"><strong>Total Billing Request Count</strong></td>
-                            <td><strong>${totalBillingRequestCount}</strong></td>
-                            <td><strong>${totalTOUCount}</strong></td>
-                         </tr>`;
+                        <td style="text-align:right;"><strong>Total Billing Request Count</strong></td>
+                        <td><strong>${totalBillingRequestCount}</strong></td>
+                        <td><strong>${totalTOUCount}</strong></td>
+                     </tr>`;
 
             summaryTable += `</tbody></table>`;
 
             Swal.fire({
                 title: title, // Use the dynamic title here
-                html: `<h3>TOU Data</h3>${touTable}<br><h3>Summary</h3>${summaryTable}`,
+                html: `<h3>${totalTOUCount > 0 ? 'TOU Data' : ''}</h3>${touTable}<br><h3>Summary</h3>${summaryTable}`,
                 width: '80%',
                 showCancelButton: true,
                 confirmButtonText: 'Export to Excel',
@@ -276,7 +289,9 @@
                     return true;
                 },
                 didOpen: () => {
-                    document.getElementById('meterIDHeader').addEventListener('click', copyMeterIDToClipboard);
+                    if (totalTOUCount > 0) {
+                        document.getElementById('meterIDHeader').addEventListener('click', copyMeterIDToClipboard);
+                    }
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -287,6 +302,7 @@
                 }
             });
         }
+
 
         document.getElementById('fileInput').addEventListener('change', function () {
             const files = this.files;
@@ -363,7 +379,7 @@
                 Swal.fire({
                     icon: 'error',
                     title: 'No data to write',
-                    text: 'No data to write to Excel. Please try again with valid XML files.'
+                    text: 'No matching RegisterID found. Please try again with valid XML files.'
                 });
             }
         });
