@@ -130,24 +130,31 @@
             let touCount = 0;
 
             Array.from(billingRequests).forEach(request => {
-                const registerID = request.getElementsByTagName('ns0:RegisterID')[0].textContent;
-                const entityID = request.getElementsByTagName('ns0:EntityID')[0].textContent;
+                const registerIDElement = request.getElementsByTagName('ns0:RegisterID')[0];
+                const entityIDElement = request.getElementsByTagName('ns0:EntityID')[0];
 
-                if (registerID === '010') {  // Condition to match '010'
+                if (registerIDElement && entityIDElement) {
+                    const registerID = registerIDElement.textContent;
+                    const entityID = entityIDElement.textContent;
+
                     extractedData.push({
                         MeterID: entityID,
-                        RegisterID: 'TOU'
+                        RegisterID: registerID === '010' ? 'TOU' : 'UNIT'
                     });
-                    touCount++;
+
+                    if (registerID === '010') {
+                        touCount++;
+                    }
                 }
             });
 
             if (extractedData.length === 0) {
                 extractedData.push({ MeterID: '', RegisterID: '' });
-
             }
+
             return { data: extractedData, touCount: touCount };
         }
+
 
         function generateExcel(data, summaryData, filename) {
             const workbook = XLSX.utils.book_new();
