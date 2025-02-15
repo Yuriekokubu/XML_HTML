@@ -159,7 +159,7 @@
         function generateExcel(data, summaryData, filename) {
             const workbook = XLSX.utils.book_new();
             const worksheet = XLSX.utils.json_to_sheet(data);
-            XLSX.utils.book_append_sheet(workbook, worksheet, "TOU");
+            XLSX.utils.book_append_sheet(workbook, worksheet, "ALL TOU_UNIT");
 
             const summarySheet = XLSX.utils.json_to_sheet(summaryData);
             XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
@@ -217,8 +217,8 @@
         }
 
         function displayDataInSweetAlert(data, summaryData, totalTOUCount, firstFileName) {
-            const extractedDate = extractDateFromFilename(firstFileName); // Extract the date from the filename
-            const title = extractedDate ? `Billing Request (${extractedDate})` : 'Extracted Data'; // Add date to the title if available
+            const extractedDate = extractDateFromFilename(firstFileName);
+            const title = extractedDate ? `Billing Request (${extractedDate})` : 'Extracted Data';
 
             summaryData.sort((a, b) => {
                 const extractNumber = (fileName) => {
@@ -228,32 +228,34 @@
                 return extractNumber(a.fileName) - extractNumber(b.fileName);
             });
 
-            let touTable = '';
-            if (totalTOUCount > 0) {
-                // Only show TOU table if there is any TOU data
-                touTable = `<div style="max-height: 300px; overflow-y: auto;">
-                        <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:center;">
-                            <thead>
-                                <tr>
-                                    <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
-                                    <th style="background-color: #007bff; color: white;">RegisterID</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
+            // ✅ **Filter only TOU records**
+            const touData = data.filter(item => item.RegisterID === "TOU");
 
-                data.forEach(item => {
+            let touTable = '';
+            if (touData.length > 0) {
+                touTable = `<div style="max-height: 300px; overflow-y: auto;">
+                <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:center;">
+                    <thead>
+                        <tr>
+                            <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
+                            <th style="background-color: #007bff; color: white;">RegisterID</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+                touData.forEach(item => {
                     touTable += `<tr>
-                        <td>${item.MeterID}</td>
-                        <td>${item.RegisterID}</td>
-                     </tr>`;
+                <td>${item.MeterID}</td>
+                <td>${item.RegisterID}</td>
+            </tr>`;
                 });
 
                 touTable += `</tbody></table></div>`;
             } else {
                 // Show "No TOU Found" message
                 touTable = `<div style="text-align: center; font-size: 16px; color: #d9534f;">
-                        No TOU Found
-                    </div>`;
+                No TOU Found
+            </div>`;
             }
 
             let summaryTable = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:center;">
