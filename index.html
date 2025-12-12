@@ -11,8 +11,24 @@
         crossorigin="anonymous" referrerpolicy="no-referrer" />
     <link rel="icon" href="assets/aot.ico" type="image/x-icon">
     <style>
+        :root {
+            /* Define a modern color palette */
+            --primary-color: #007bff;
+            --secondary-color: #0056b3;
+            --background-color: #1a1a2e;
+            /* Dark theme inspired by AOT/Night */
+            --card-background: rgba(43, 43, 62, 0.85);
+            /* Slightly transparent dark card */
+            --text-color: #ffffff;
+            --highlight-color: #f7d140;
+            /* Yellow/Gold for AOT-like highlight */
+            --success-color: #28a745;
+            --font-family: 'Poppins', sans-serif;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: var(--font-family);
+            /* Assuming 'assets/aa-christmas.jpg' exists */
             background-image: url('assets/aa-christmas.jpg');
             background-size: cover;
             background-position: center;
@@ -22,86 +38,137 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            background-color: black;
+            min-height: 100vh;
+            background-color: var(--background-color);
+            color: var(--text-color);
         }
 
         .container {
-            background-color: #2eff9784;
+            background-color: var(--card-background);
             padding: 40px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             text-align: center;
-            width: 100%;
-            max-width: 600px;
+            width: 90%;
+            max-width: 500px;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         h2 {
-            color: #eadf07;
-            margin-bottom: 20px;
-            font-size: 24px;
+            color: var(--highlight-color);
+            margin-bottom: 30px;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+
+        .file-upload-wrapper {
+            margin: 20px auto 30px;
+            border: 2px dashed var(--highlight-color);
+            border-radius: 8px;
+            padding: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s, border-color 0.3s;
+            max-width: 400px;
+            background-color: rgba(255, 255, 255, 0.05);
+            /* แก้ไข: เพิ่ม display: flex, justify-content, และ align-items เพื่อจัดให้อยู่กึ่งกลาง */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100px;
+            /* เพิ่มความสูงขั้นต่ำเพื่อให้มีพื้นที่ */
+        }
+
+        .file-upload-wrapper:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-color);
         }
 
         input[type="file"] {
-            display: block;
-            margin: 20px auto;
-            padding: 10px;
+            display: none;
+            /* Hide the native input */
+        }
+
+        .upload-area-text {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-color);
+            text-align: center;
+            /* แก้ไขให้ข้อความอยู่ตรงกลางแนวนอน */
+        }
+
+        .upload-area-text i {
+            font-size: 40px;
+            color: var(--highlight-color);
+            margin-bottom: 10px;
+        }
+
+        .upload-area-text p {
+            margin: 0;
             font-size: 16px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            width: 100%;
-            max-width: 400px;
-            background-color: #f9f9f9;
-            cursor: pointer;
         }
 
         button {
-            background-color: #52baff;
+            background-color: var(--primary-color);
             color: white;
             border: none;
-            padding: 12px 20px;
-            font-size: 16px;
-            border-radius: 5px;
+            padding: 12px 30px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
             cursor: pointer;
-            transition: background-color 0.3s;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
 
         button:hover {
-            background-color: #ffffff94;
+            background-color: var(--secondary-color);
+            transform: translateY(-2px);
         }
 
         .note {
-            margin-top: 15px;
+            margin-top: 25px;
             font-size: 14px;
-            color: #ffffff;
+            color: rgba(255, 255, 255, 0.7);
         }
 
         .file-list {
-            margin-top: 20px;
+            margin-top: 25px;
             display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: center;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 0 10px;
         }
 
         .file-item {
-            margin: 10px;
+            width: 100%;
+            max-width: 400px;
+            margin: 5px 0;
             display: flex;
+            justify-content: flex-start;
             align-items: center;
-            padding: 10px;
+            padding: 10px 15px;
             border-radius: 5px;
-            background-color: #f0f0f5;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background-color: rgba(255, 255, 255, 0.1);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .file-item i {
-            font-size: 24px;
-            color: #007bff;
-            margin-right: 10px;
+            font-size: 18px;
+            color: var(--highlight-color);
+            margin-right: 15px;
         }
 
         .file-item span {
-            font-size: 16px;
-            color: #333;
+            font-size: 14px;
+            color: var(--text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .snowflake {
@@ -113,6 +180,7 @@
             pointer-events: none;
             animation-name: fall;
             animation-timing-function: linear;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
         }
 
         @keyframes fall {
@@ -132,11 +200,22 @@
 <body>
 
     <div class="container">
-        <h2>Upload XML Files and Convert to Excel</h2>
-        <input type="file" id="fileInput" accept=".xml" multiple>
-        <br><br>
-        <button id="convertButton">Convert</button>
-        <p class="note">Please select XML files and click the button to convert them to Excel.</p>
+        <h2><i class="fas fa-file-export"></i> XML to Excel Converter</h2>
+
+        <label for="fileInput" class="file-upload-wrapper">
+            <div class="upload-area-text">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Click here to select XML files</p>
+                <p style="font-size: 12px; color: rgba(255, 255, 255, 0.5);">Supports multiple files (.xml)</p>
+            </div>
+            <input type="file" id="fileInput" accept=".xml" multiple>
+        </label>
+
+        <button id="convertButton">
+            <i class="fas fa-table"></i> Convert to Excel
+        </button>
+
+        <p class="note">Selected files will be listed below.</p>
         <div class="file-list" id="fileList"></div>
     </div>
 
@@ -180,16 +259,46 @@
         }
 
 
-        function generateExcel(data, summaryData, filename) {
+        // =========================================================================
+        // 📌 **MODIFIED: Generate Excel with Totals on Summary Sheet**
+        function generateExcel(data, summaryData, totalBillingRequestCount, totalTOUCount, filename) {
             const workbook = XLSX.utils.book_new();
+
+            // 1. ALL TOU_UNIT Sheet
             const worksheet = XLSX.utils.json_to_sheet(data);
             XLSX.utils.book_append_sheet(workbook, worksheet, "ALL TOU_UNIT");
 
-            const summarySheet = XLSX.utils.json_to_sheet(summaryData);
+            // 2. Summary Sheet
+            const summaryForExcel = summaryData.map(item => ({
+                'File Name': item.fileName,
+                'Billing Request Count': item.count_register,
+                'TOU Count': item.tou_count
+            }));
+
+            // Add the total row to the data array
+            summaryForExcel.push({
+                'File Name': 'Total',
+                'Billing Request Count': totalBillingRequestCount,
+                'TOU Count': totalTOUCount
+            });
+
+
+            const summarySheet = XLSX.utils.json_to_sheet(summaryForExcel);
+
+            // Optionally style the total row in the Excel sheet
+            // Note: XLSX.js does not support full styling, but we can set cell values.
+            // You may need a more advanced library or post-processing for complex Excel formatting.
+            const totalRowIndex = summaryForExcel.length;
+            const totalCellRef = XLSX.utils.encode_cell({ c: 0, r: totalRowIndex });
+            if (summarySheet[totalCellRef]) {
+                summarySheet[totalCellRef].v = 'Total'; // Ensure the label is 'Total'
+            }
+
             XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
 
             XLSX.writeFile(workbook, filename);
         }
+        // =========================================================================
 
         function extractDateFromFilename(filename) {
             const match = filename.match(/\d{8}/);
@@ -240,7 +349,8 @@
                 });
         }
 
-        function displayDataInSweetAlert(data, summaryData, totalTOUCount, firstFileName) {
+        // 📌 **MODIFIED: Added totalBillingRequestCount parameter**
+        function displayDataInSweetAlert(data, summaryData, totalTOUCount, totalBillingRequestCount, firstFileName) {
             const extractedDate = extractDateFromFilename(firstFileName);
             const title = extractedDate ? `Billing Request (${extractedDate})` : 'Extracted Data';
 
@@ -259,19 +369,19 @@
             if (touData.length > 0) {
                 touTable = `<div style="max-height: 300px; overflow-y: auto;">
                 <table id="touTable" border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:center;">
-                    <thead>
-                        <tr>
-                            <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
-                            <th style="background-color: #007bff; color: white;">RegisterID</th>
-                        </tr>
-                    </thead>
-                    <tbody>`;
+                  <thead>
+                    <tr>
+                      <th id="meterIDHeader" style="cursor:pointer; background-color: #007bff; color: white;">MeterID</th>
+                      <th style="background-color: #007bff; color: white;">RegisterID</th>
+                    </tr>
+                  </thead>
+                  <tbody>`;
 
                 touData.forEach(item => {
                     touTable += `<tr>
                 <td>${item.MeterID}</td>
                 <td>${item.RegisterID}</td>
-            </tr>`;
+              </tr>`;
                 });
 
                 touTable += `</tbody></table></div>`;
@@ -279,35 +389,36 @@
                 // Show "No TOU Found" message
                 touTable = `<div style="text-align: center; font-size: 16px; color: #d9534f;">
                 No TOU Found
-            </div>`;
+              </div>`;
             }
 
             let summaryTable = `<table border="1" cellpadding="5" cellspacing="0" style="border-collapse:collapse;width:100%;text-align:center;">
-                            <thead>
-                                <tr>
-                                    <th style="background-color: #007bff; color: white;">File Name</th>
-                                    <th style="background-color: #007bff; color: white;">Billing Request Count</th>
-                                    <th style="background-color: #007bff; color: white;">TOU Count</th>
-                                </tr>
-                            </thead>
-                            <tbody>`;
+                      <thead>
+                        <tr>
+                          <th style="background-color: #007bff; color: white;">File Name</th>
+                          <th style="background-color: #007bff; color: white;">Billing Request Count</th>
+                          <th style="background-color: #007bff; color: white;">TOU Count</th>
+                        </tr>
+                      </thead>
+                      <tbody>`;
 
-            let totalBillingRequestCount = 0;
+            // let totalBillingRequestCount = 0; // Removed as it's now passed as a parameter
 
             summaryData.forEach(item => {
                 summaryTable += `<tr>
-                            <td>${item.fileName}</td>
-                            <td>${item.count_register}</td>
-                            <td>${item.tou_count}</td>
-                         </tr>`;
-                totalBillingRequestCount += item.count_register;
+                      <td>${item.fileName}</td>
+                      <td>${item.count_register}</td>
+                      <td>${item.tou_count}</td>
+                     </tr>`;
+                // totalBillingRequestCount += item.count_register; // Removed as it's now calculated outside
             });
 
+            // 📌 **MODIFIED: Style the total row for better visibility in SweetAlert**
             summaryTable += `<tr>
-                        <td style="text-align:right;"><strong>Total Billing Request Count</strong></td>
-                        <td><strong>${totalBillingRequestCount}</strong></td>
-                        <td><strong>${totalTOUCount}</strong></td>
-                     </tr>`;
+                    <td style="text-align:right;"><strong>Total</strong></td>
+                    <td><strong>${totalBillingRequestCount}</strong></td>
+                    <td><strong>${totalTOUCount}</strong></td>
+                   </tr>`;
 
             summaryTable += `</tbody></table>`;
 
@@ -331,7 +442,8 @@
                     const date = extractDateFromFilename(firstFileName);
                     const filename = date ? `${date}_export.xlsx` : 'export_result.xlsx';
 
-                    generateExcel(data, summaryData, filename);
+                    // 📌 **MODIFIED: Pass total counts to generateExcel**
+                    generateExcel(data, summaryData, totalBillingRequestCount, totalTOUCount, filename);
                 }
             });
         }
@@ -365,6 +477,7 @@
             let mergedData = [];
             let summaryData = [];
             let totalTOUCount = 0;
+            let totalBillingRequestCount = 0; // 📌 **MODIFIED: Initialize totalBillingRequestCount**
 
             const readFilesPromises = Array.from(files).map(file => {
                 return new Promise((resolve, reject) => {
@@ -385,6 +498,7 @@
                         });
 
                         totalTOUCount += touCount;
+                        totalBillingRequestCount += billingRequestCount; // 📌 **MODIFIED: Accumulate totalBillingRequestCount**
 
                         resolve();
                     };
@@ -407,7 +521,8 @@
             if (mergedData.length > 0) {
                 const firstFile = files[0];
 
-                displayDataInSweetAlert(mergedData, summaryData, totalTOUCount, firstFile.name);
+                // 📌 **MODIFIED: Pass totalBillingRequestCount to displayDataInSweetAlert**
+                displayDataInSweetAlert(mergedData, summaryData, totalTOUCount, totalBillingRequestCount, firstFile.name);
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -418,6 +533,9 @@
         });
 
         window.addEventListener('scroll', () => {
+            // This part seems to have a syntax error with floatingDropdown which is not defined.
+            // I will comment out the erroring code to avoid runtime issues.
+            /*
             if (window.scrollY > scrollThreshold) {
                 // เลื่อนลงเกิน threshold, เปลี่ยนเป็นแบบสัญลักษณ์เท่านั้น
                 floatingDropdown.classList.add('scrolled');
@@ -425,6 +543,7 @@
                 // อยู่ด้านบน, เปลี่ยนกลับเป็นแบบเต็ม
                 floatingDropdown.classList.remove('scrolled');
             }
+            */
         });
 
         // ========================================================= SNOWFLAKE EFFECT
